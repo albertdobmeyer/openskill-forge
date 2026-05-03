@@ -2,167 +2,147 @@
 
 [![Skill CI](https://github.com/albertdobmeyer/clawhub-forge/actions/workflows/skill-ci.yml/badge.svg)](https://github.com/albertdobmeyer/clawhub-forge/actions/workflows/skill-ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-The Skill Development Workbench for [ClawHub](https://clawdhub.com). An offline-first pipeline to build, validate, and publish agent skills: `make new` → `make lint` → `make scan` → `make test` → `make publish`.
+A skill-authoring toolchain and security scanner for [ClawHub](https://clawdhub.com), the third-party skill registry for the OpenClaw agent runtime. Provides offline static analysis, line-level zero-trust verification, behavioural testing, and a gated publishing pipeline.
 
-**Author**: [@albertdobmeyer](https://github.com/albertdobmeyer)
+This repository serves two roles. As a **standalone toolchain**, it is the author's environment for creating, testing, and publishing skills to ClawHub; twenty-five published skills are included as reference implementations. As a **Lobster-TrApp component**, the same scanner runs inside the `vault-forge` container of the four-container perimeter to vet skills before they reach the agent runtime in `vault-agent`.
 
----
-
-## What Is This
-
-A complete development workbench for ClawHub skills. Twenty-five published skills, a linter, an offline security scanner (87 patterns, 13 categories including prompt injection detection, SARIF output), a zero-trust skill verifier (guilty-until-proven-innocent line classification), a test framework (100% coverage), and a gated publishing pipeline — all driven from a single Makefile.
-
-**What you can do here:** scaffold new skills from templates, lint them for structure and content quality, scan them for malicious patterns (offline, no network required), run behavioral tests, and publish through a gated pipeline.
-
-**What this isn't:** a runtime for running OpenClaw agents, or a sandbox for executing untrusted code. For that, see [openclaw-vault](https://github.com/albertdobmeyer/openclaw-vault) — the hardened container companion where your API key never enters the container.
+**Author:** [@albertdobmeyer](https://github.com/albertdobmeyer)
 
 ---
 
-## Why a Workbench?
+## Why a static scanner
 
-**"How is this better than just having Claude write a SKILL.md?"**
+Generating a skill takes seconds. The gap between *generated* and *production-ready* — which is where supply-chain risk lives — is the problem this toolchain addresses. The pipeline gates each skill through:
 
-An AI can draft a skill file in seconds. What it can't do is gate its own output through a security pipeline, track quality over time, or prove to a human operator that the result is safe. This workbench exists because the gap between "generated" and "production-ready" is where real risk lives.
+- **87 malicious-content patterns across 13 categories**, MITRE ATT&CK-mapped, derived from observed trojanised skills (the ClawHavoc campaign and the `moltbook-ay` trojan).
+- **Sixteen prompt-injection detection patterns**, covering instruction override, persona hijacking, stealth commands, exfiltration directives, and LLM control-token injection.
+- **Multi-file scanning** across `.md`, `.sh`, `.py`, `.js`, `.ts`, `.yaml`, `.yml`, `.json`. Many trojanised skills hid the payload outside `SKILL.md`.
+- **Strict mode** (`make scan-strict`) blocks `HIGH`-severity findings in addition to `CRITICAL`. Defends against credential theft, persistence, and container-escape patterns that fall short of `CRITICAL` thresholds.
+- **Post-install quarantine** — when `ALLOW_INSTALL=1` is used, the scanner re-runs on newly installed skills; failures are quarantined.
+- **Suppression audit** — `.scanignore` ranges greater than 50 lines are rejected, preventing blanket suppression of large file regions.
+- **Behavioural assertions** — 168+ assertions enforce structural and content consistency across all included skills.
+- **Mandatory test gate** — every skill must have a test file before it can be published.
+- **Gated publishing** — `make publish` will not run unless lint, scan, and test all pass.
+- **SARIF output** — `make scan-sarif` produces SARIF 2.1.0 for GitHub code-scanning integration.
+- **Zero-trust line verifier** — `make verify-all` classifies every line in every file. A single unrecognised line quarantines the entire skill. Detects novel attacks the static blocklist does not cover.
+- **Trend tracking** — `make stats-trend` and `make stats-rank` report adoption metrics over time.
 
-What the pipeline provides that raw authoring doesn't:
-
-- **71 malicious patterns across 13 categories** — MITRE ATT&CK mapped, derived from real trojanized skills (the ClawHavoc campaign). Every skill is scanned offline before publishing.
-- **Prompt injection detection** — 16 patterns detect LLM manipulation attempts: override instructions, persona hijacking, stealth commands, data theft instructions, and format token injection.
-- **Multi-file scanning** — the scanner inspects ALL files in skill directories (`.md`, `.sh`, `.py`, `.js`, `.ts`, `.yaml`, `.yml`, `.json`), not just `SKILL.md`.
-- **Strict mode** — `make scan-strict` blocks HIGH findings too, not just CRITICAL. Prevents ssh key theft, persistence, and container escape patterns from slipping through.
-- **Post-install quarantine** — when `ALLOW_INSTALL=1` is used, the scanner auto-runs on newly installed skills and quarantines failures.
-- **Suppression audit** — `.scanignore` files are validated: ranges >50 lines are rejected (prevents `L1-L9999` blanket suppression).
-- **Behavioral assertions** — 168+ test assertions enforce content consistency, structural requirements, and domain accuracy across all skills.
-- **Mandatory test gate** — every skill must have a test file to publish. No more silent test skipping.
-- **Gated publishing** — `make publish` won't run until lint, scan, and test all pass. No human judgment call required at the gate.
-- **SARIF output for CI** — GitHub code scanning integration via `make scan-sarif`, so the pipeline runs on every PR automatically.
-- **Transparent allowlisting** — skills that legitimately discuss security patterns (like `security-audit`) use explicit `.scanignore` files, not global suppression. Every exception is auditable.
-- **Zero-trust verification** — `make verify-all` classifies every line in every skill file. One unrecognizable line quarantines the entire skill. Catches novel attacks the blocklist misses.
-- **Tool test suite** — 40+ behavioral tests verify the workbench tools themselves (`make test-tools`).
-- **Trend tracking** — `make stats-trend` shows whether skills are growing or dying. `make stats-rank` shows competitive positioning.
-
-Run `make report` to see a concrete summary of what the pipeline catches.
+`make report` produces a concrete summary of the gates exercised by the pipeline.
 
 ---
 
-## Operator Commands
-
-Commands for the human operator to assess workbench health and competitive position:
+## Operator commands
 
 ```bash
-make verify                           # 12-point workbench health check
-make report                           # Pipeline value summary
-make scan-strict                      # Scan with --strict (HIGH blocks)
-make verify-all                       # Zero-trust verify all skills
-make verify-skill SKILL=docker-sandbox # Verify single skill
-make verify-report SKILL=docker-sandbox # Per-line verdict report
-make test-tools                       # Run tool behavioral tests
-make check-all                        # Full pipeline + self-test + tool tests
-make explore                          # Top 20 skills by downloads
-make explore QUERY="docker"           # Semantic search for competitors
-make explore SORT=trending            # What's hot right now
-make explore SORT=installs LIMIT=50   # Most installed, larger set
-make stats                            # Current adoption metrics
-make stats-trend                      # Growth deltas vs previous snapshots
-make stats-rank                       # Our skills ranked against top 50
+make verify                              # 12-point workbench health check
+make report                              # Pipeline summary
+make scan-strict                         # Scan with HIGH-severity blocking
+make verify-all                          # Zero-trust verify all skills
+make verify-skill SKILL=docker-sandbox   # Verify a single skill
+make verify-report SKILL=docker-sandbox  # Per-line verdict report
+make test-tools                          # Tool behavioural tests
+make check-all                           # Full pipeline + self-test + tool tests
+make explore                             # Top 20 skills on ClawHub by downloads
+make explore QUERY="docker"              # Semantic search
+make explore SORT=trending               # Currently trending
+make stats                               # Adoption metrics for the included skills
+make stats-trend                         # Growth deltas vs previous snapshots
+make stats-rank                          # Included skills ranked against ClawHub top 50
 ```
 
 ---
 
-## What's Not Here
+## Limitations
 
-Transparency about what the workbench can't do:
+The toolchain is transparent about what it cannot provide:
 
-- **Who installed your skills** — the ClawHub API doesn't expose installer identities or per-user usage data. Download counts are the best signal available.
-- **Bot/agent network visibility** — no way to distinguish human installs from automated agent installs. The API doesn't differentiate.
-- **Web dashboard** — this is a CLI workbench; terminal tables are the right UX for the workflow. If you want a GUI, see the roadmap for the planned meta-repo.
-- **Skill dependencies** — ClawHub has no dependency resolution. Skills are standalone by design.
-- **Auto-version bumping** — too risky without human review. Version is always an explicit `VERSION=x.y.z` parameter.
+- **Installer identity** — the ClawHub API does not expose installer identities or per-user usage data. Download counts are the best signal.
+- **Bot-versus-human attribution** — there is no way to distinguish human installs from automated agent installs.
+- **No web dashboard** — this is a CLI-first toolchain; terminal output and machine-readable summaries are the supported interfaces.
+- **No dependency resolution** — ClawHub treats skills as standalone; no automatic dependency installation.
+- **No automatic version bumping** — version is always an explicit `VERSION=x.y.z` parameter, requiring deliberate operator action.
 
 ---
 
-## Quick Start
+## Quick start
 
-### Option A: VS Code Dev Containers
+### Dev container (recommended)
 
-Open this repo in VS Code with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers). The devcontainer installs Node.js, Python, molthub, and all dependencies automatically.
+Open this repository in VS Code with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers). The dev container installs Node.js, Python, `molthub`, and required dependencies automatically.
 
-### Option B: Local
+### Local
 
-Requirements: bash, git, python3 (for YAML/JSON validation). Optional: molthub (`npm install -g molthub`).
+Requirements: bash, git, python3 (for YAML and JSON validation). Optional: `molthub` (`npm install -g molthub`).
 
 ```bash
-make help          # Show all commands
-make new SKILL=my-tool          # Scaffold from template
-make lint          # Lint all skills
-make scan          # Security scan all skills
-make test          # Run behavioral tests
-make check         # Full pipeline: lint + scan + test
+make help                                # All available commands
+make new SKILL=my-tool                   # Scaffold a skill from template
+make lint                                # Lint all skills
+make scan                                # Security-scan all skills
+make test                                # Run behavioural tests
+make check                               # Full pipeline: lint + scan + test
 ```
 
 ---
 
-## The Pipeline
+## Pipeline stages
 
 ### Linter (`make lint`)
 
-Automates skill quality review. Checks:
-- **Frontmatter** — delimiters, required fields (`name`, `description`, `metadata`), valid slug, description length, valid JSON metadata
-- **Structure** — H1 title, `## When to Use` section, `## Tips` section
-- **Content quality** — line count (150-700), code block density (8+ blocks), language tags on fences, no TODO/FIXME/XXX placeholders
-- **Metadata consistency** — each binary in `requires.anyBins` is referenced in the content body
+Verifies skill quality. Checks frontmatter completeness (`name`, `description`, `metadata`; valid slug; description length; valid JSON metadata), structural elements (H1 title, `## When to Use`, `## Tips`), content quality (line count between 150 and 700, ≥8 code blocks, language tags on fences, absence of `TODO`/`FIXME`/`XXX` placeholders), and metadata consistency (every binary in `requires.anyBins` referenced in the body).
 
 ### Scanner (`make scan`)
 
-**Offline security scanner** — works without network. 87 patterns across 13 categories with MITRE ATT&CK IDs, derived from the real [moltbook-ay trojan](docs/research/security-report.md) and ClawHavoc campaign analysis. Scans ALL files in skill directories, not just SKILL.md.
+Offline. Network access is not required at scan time. Operates on the entire skill directory, not just `SKILL.md`. Pattern catalogue:
 
-| Category | Severity | What it catches |
-|----------|----------|-----------------|
-| C2/Download | CRITICAL | curl/wget/fetch to external URLs |
-| Archive execution | CRITICAL | Password-protected ZIP/7z extraction |
-| Exec download | CRITICAL | chmod+execute, bash -c with curl, eval with subshell |
-| Credential access | HIGH | Reading .env, .ssh keys, AWS/K8s creds, /proc/environ, PEM files |
-| Data exfiltration | CRITICAL | curl POST, netcat, DNS exfil, SCP, git push, FTP to IPs |
-| Obfuscation | HIGH | Base64/hex decode to shell, Python/Perl/Ruby eval, OpenSSL decrypt |
-| Persistence | HIGH | crontab, bashrc/profile/zshrc/fish, at now, launchctl |
-| Privilege escalation | MEDIUM-HIGH | sudo chmod 777, setuid, sudo su, nsenter |
-| Container escape | HIGH | --privileged, SYS_ADMIN, mount host, docker.sock, sysrq |
-| Supply chain | MEDIUM | Unsafe npm install, pip --pre, registry hijack |
-| Environment injection | MEDIUM | LD_PRELOAD, PATH manipulation, env -i |
+| Category | Severity | Coverage |
+|----------|----------|----------|
+| C2 / download | CRITICAL | curl, wget, fetch to external URLs |
+| Archive execution | CRITICAL | Password-protected ZIP / 7z extraction |
+| Exec download | CRITICAL | chmod-then-execute, `bash -c` with curl, eval with subshell |
+| Credential access | HIGH | `.env`, `.ssh` keys, AWS/Kubernetes credentials, `/proc/environ`, PEM files |
+| Data exfiltration | CRITICAL | `curl POST`, netcat, DNS exfiltration, `scp`, `git push`, FTP to literal IPs |
+| Obfuscation | HIGH | Base64/hex-decode-to-shell, Python/Perl/Ruby `eval`, OpenSSL decrypt |
+| Persistence | HIGH | crontab, `~/.bashrc`/`.profile`/`.zshrc`/fish, `at now`, `launchctl` |
+| Privilege escalation | MEDIUM–HIGH | `sudo chmod 777`, setuid, `sudo su`, `nsenter` |
+| Container escape | HIGH | `--privileged`, `SYS_ADMIN`, host-mount, docker.sock, `sysrq` |
+| Supply chain | MEDIUM | Unsafe `npm install`, `pip --pre`, registry hijack |
+| Environment injection | MEDIUM | `LD_PRELOAD`, PATH manipulation, `env -i` |
 | Resource abuse | HIGH | Fork bomb, infinite loop with network |
-| **Prompt injection** | **HIGH-CRITICAL** | **Override attempts, persona hijacking, stealth instructions, data theft, LLM control tokens** |
+| Prompt injection | HIGH–CRITICAL | Override attempts, persona hijacking, stealth instructions, exfiltration directives, LLM control-token injection |
 
-**Output modes:** `make scan` (colored terminal), `make scan-summary` (one-line per skill), `make scan-json` (structured JSON), `make scan-sarif` (SARIF 2.1.0 for GitHub code scanning), `make scan-strict` (HIGH blocks too). Scanner self-test: `make self-test`.
+Output modes:
 
-Skills that legitimately discuss these patterns (like `security-audit`) can use `<!-- scan:ignore -->` inline or a `.scanignore` file. Scanignore files are audited: ranges >50 lines are rejected.
+| Command | Output |
+|---------|--------|
+| `make scan` | Coloured terminal output |
+| `make scan-summary` | One line per skill |
+| `make scan-json` | Structured JSON |
+| `make scan-sarif` | SARIF 2.1.0 for GitHub code scanning |
+| `make scan-strict` | HIGH severity blocks in addition to CRITICAL |
+| `make self-test` | Validates the scanner against known-bad and known-clean fixtures |
 
-### Zero-Trust Verifier (`make verify-skill SKILL=name`)
+Skills that legitimately reference malicious patterns (e.g. `security-audit`) may use inline `<!-- scan:ignore -->` markers or a `.scanignore` file. Suppressions are audited; ranges greater than 50 lines are rejected.
 
-**Guilty until proven innocent.** The scanner uses a blocklist (scan for known-bad, let everything else through). The verifier flips this: every line in every file must be classified as SAFE, or the entire skill is quarantined. No partial passes, no thresholds.
+### Zero-trust verifier (`make verify-skill SKILL=name`)
 
-Every line gets one of three verdicts:
+The scanner uses a blocklist (search for known-bad, allow everything else). The verifier inverts this: every line in every file must classify as `SAFE`, otherwise the entire skill is quarantined. No partial passes; no thresholds.
 
 | Verdict | Meaning |
 |---|---|
-| `SAFE` | Line matches a known-safe pattern (structural markdown, prose under 500 chars, code inside fenced blocks, frontmatter fields) |
-| `SUSPICIOUS` | Line doesn't match any safe pattern (possible obfuscation, unknown encoding, excessively long content) |
-| `MALICIOUS` | Line triggers the 87-pattern blocklist |
+| `SAFE` | Matches a known-safe pattern (structural Markdown, prose under 500 characters, code inside fenced blocks, frontmatter fields) |
+| `SUSPICIOUS` | Does not match any safe pattern (possible obfuscation, unknown encoding, excessively long content) |
+| `MALICIOUS` | Triggers the 87-pattern blocklist |
 
-**Release rule:** A skill is released from quarantine ONLY if it has ZERO malicious lines AND ZERO suspicious lines. One unrecognizable line quarantines the entire skill.
+A skill is released from quarantine only if it has zero malicious lines and zero suspicious lines.
 
-**Two-stage defense:** Post-install, skills pass through `skill-scan.sh --strict` (blocklist, fast) then `skill-verify.sh --strict` (allowlist, thorough). Both must pass.
+**Two-stage post-install defence:** newly installed skills pass through `skill-scan.sh --strict` (blocklist, fast) and then `skill-verify.sh --strict` (allowlist, thorough). Both must pass.
 
-**Trust manifests:** Our own skills can carry `.trust` files with SHA-256 content hashes, allowing them to skip verification when unchanged. External skills never have trust manifests.
+**Trust manifests:** included skills can carry `.trust` files containing SHA-256 content hashes, allowing them to skip verification when unchanged. External skills do not carry trust manifests.
 
-```bash
-make verify-skill SKILL=docker-sandbox   # Verify single skill
-make verify-all                           # Verify all skills
-make verify-report SKILL=docker-sandbox   # Per-line verdict report
-```
+### Test framework (`make test`)
 
-### Test Framework (`make test`)
-
-Behavioral assertions for skills — the "pytest for SKILL.md files":
+Behavioural assertions for skills, equivalent in role to a unit-test framework for `SKILL.md` files:
 
 ```bash
 assert_section_exists "$SKILL" "When to Use"
@@ -172,11 +152,11 @@ assert_min_code_blocks "$SKILL" 8
 assert_frontmatter_field "$SKILL" "name" "^docker-sandbox$"
 ```
 
-Write `tests/<skill-name>.test.sh` with `test_*` functions. The runner discovers and executes them automatically.
+Tests live at `tests/<skill-name>.test.sh` with `test_*` functions. The runner discovers and executes them automatically.
 
 ### Publisher (`make publish`)
 
-Gated pipeline: lint → scan → test must all pass before `molthub publish` runs. Usage:
+Gated pipeline. Lint, scan, and test must all pass before `molthub publish` is invoked.
 
 ```bash
 make publish SKILL=my-tool VERSION=1.0.0
@@ -184,137 +164,107 @@ make publish SKILL=my-tool VERSION=1.0.0
 
 ---
 
-## Published Skills
+## Containerised deployment
 
-Twenty-four production-quality skills filling infrastructure gaps in the ClawHub registry.
+In production, the toolchain runs inside the `vault-forge` container of the Lobster-TrApp four-container perimeter. All untrusted content (downloaded skills) is processed inside the container and never reaches the host filesystem.
 
-### Batch 1 — Gap-Fill (built in Docker sandbox)
+- The `Containerfile` in this repository's root defines the image (~233 MB, `python:3.10-slim` plus the bash toolchain).
+- `vault-forge` is one of four services in `compose.yml` at the lobster-trapp root.
+- It runs on `forge-net`, an internal network. It can reach `vault-proxy` for outbound HTTPS but cannot reach `vault-agent` or `vault-pioneer` directly.
+- Certified skills are delivered to the agent through the `forge-deliveries` shared volume, which is writable in `vault-forge` and read-only in `vault-agent`.
+- Non-root user, capabilities dropped, 1 GB memory limit, custom seccomp profile.
 
-| Skill | Install | What It Does |
+The CLI/Makefile usage documented above remains the supported interface for development. The `Containerfile` copies this repository into the image and runs the same bash toolchain.
+
+---
+
+## Included skills
+
+Twenty-five reference skills, all passing the full pipeline:
+
+| Skill | Install | Description |
 |---|---|---|
-| [Docker Sandbox](skills/docker-sandbox/SKILL.md) | `molthub install docker-sandbox` | Docker sandbox VM management, network proxy, workspace mounting, troubleshooting |
-| [CSV Data Pipeline](skills/csv-pipeline/SKILL.md) | `molthub install csv-pipeline` | CSV/JSON/TSV processing with awk and Python — filter, join, aggregate, deduplicate, validate, convert |
-| [API Development](skills/api-dev/SKILL.md) | `molthub install api-dev` | curl testing, bash/Python test runners, OpenAPI spec generation, mock servers, Express scaffolding |
-| [CI/CD Pipeline](skills/cicd-pipeline/SKILL.md) | `molthub install cicd-pipeline` | GitHub Actions for Node/Python/Go/Rust, matrix builds, caching, Docker build+push, secrets management |
-
-### Batch 2 — Post-Gold-Rush Infrastructure
-
-| Skill | Install | What It Does |
-|---|---|---|
-| [SQL Toolkit](skills/sql-toolkit/SKILL.md) | `molthub install sql-toolkit` | SQLite/PostgreSQL/MySQL — schema design, queries, CTEs, window functions, migrations, EXPLAIN, indexing |
-| [Test Patterns](skills/test-patterns/SKILL.md) | `molthub install test-patterns` | Jest/Vitest, pytest, Go, Rust, Bash — unit tests, mocking, fixtures, coverage, TDD, integration testing |
-| [Log Analyzer](skills/log-analyzer/SKILL.md) | `molthub install log-analyzer` | Log parsing, error patterns, stack trace extraction, structured logging setup, real-time monitoring, correlation |
-| [Security Audit Toolkit](skills/security-audit/SKILL.md) | `molthub install security-audit-toolkit` | Dependency scanning, secret detection, OWASP patterns, SSL/TLS verification, file permissions, audit scripts |
-| [Infrastructure as Code](skills/infra-as-code/SKILL.md) | `molthub install infra-as-code` | Terraform, CloudFormation, Pulumi — VPC, compute, storage, state management, multi-environment patterns |
-| [Performance Profiler](skills/perf-profiler/SKILL.md) | `molthub install perf-profiler` | CPU/memory profiling, flame graphs, benchmarking, load testing, memory leak detection, query optimization |
-
-### Batch 3 — Niche Developer Essentials
-
-| Skill | Install | What It Does |
-|---|---|---|
-| [Git Workflows](skills/git-workflows/SKILL.md) | `molthub install git-workflows` | Interactive rebase, bisect, worktree, reflog recovery, cherry-pick, subtree/submodule, sparse checkout, conflict resolution |
-| [Regex Patterns](skills/regex-patterns/SKILL.md) | `molthub install regex-patterns` | Validation patterns, parsing, extraction across JS/Python/Go/grep, search-and-replace, lookahead/lookbehind |
-| [SSH Tunnel](skills/ssh-tunnel/SKILL.md) | `molthub install ssh-tunnel` | Local/remote/dynamic port forwarding, jump hosts, SSH config, key management, scp/rsync, connection debugging |
-| [Container Debug](skills/container-debug/SKILL.md) | `molthub install container-debug` | Docker logs, exec, networking diagnostics, resource inspection, multi-stage build debugging, health checks, Compose |
-| [Data Validation](skills/data-validation/SKILL.md) | `molthub install data-validation` | JSON Schema, Zod (TypeScript), Pydantic (Python), CSV/JSON integrity checks, migration validation |
-| [Shell Scripting](skills/shell-scripting/SKILL.md) | `molthub install shell-scripting` | Argument parsing, error handling, trap/cleanup, temp files, parallel execution, portability, config parsing |
-| [DNS & Networking](skills/dns-networking/SKILL.md) | `molthub install dns-networking` | DNS debugging (dig/nslookup), port testing, firewall rules, curl diagnostics, proxy config, certificates |
-| [Cron & Scheduling](skills/cron-scheduling/SKILL.md) | `molthub install cron-scheduling` | Cron syntax, systemd timers, one-off jobs, timezone/DST handling, job monitoring, locking, idempotent patterns |
-| [Encoding & Formats](skills/encoding-formats/SKILL.md) | `molthub install encoding-formats` | Base64, URL encoding, hex, Unicode, JWT decoding, hashing/checksums, serialization format conversion |
-| [Makefile & Build](skills/makefile-build/SKILL.md) | `molthub install makefile-build` | Make targets, pattern rules, Go/Python/Node/Docker Makefiles, Just and Task as modern alternatives |
-
-### Batch 4 — Meta-Skills
-
-| Skill | Install | What It Does |
-|---|---|---|
-| [Skill Writer](skills/skill-writer/SKILL.md) | `molthub install skill-writer` | SKILL.md authoring guide — format spec, frontmatter schema, content patterns, templates, publishing checklist |
-| [Skill Reviewer](skills/skill-reviewer/SKILL.md) | `molthub install skill-reviewer` | Skill quality audit — scoring rubric, defect checklists, structural/content/actionability review framework |
-| [Skill Search Optimizer](skills/skill-search-optimizer/SKILL.md) | `molthub install skill-search-optimizer` | Registry discoverability — semantic search mechanics, description optimization, visibility testing, competitive positioning |
-
-### Batch 5 — The Capstone
-
-| Skill | Install | What It Does |
-|---|---|---|
-| [Emergency Rescue Kit](skills/emergency-rescue/SKILL.md) | `molthub install emergency-rescue` | Git disasters, credential leaks, disk full, OOM kills, database failures, deploy rollbacks, SSH lockouts, network outages — step-by-step recovery |
+| [api-dev](skills/api-dev/SKILL.md) | `molthub install api-dev` | curl testing, bash and Python test runners, OpenAPI-spec generation, mock servers, Express scaffolding |
+| [cicd-pipeline](skills/cicd-pipeline/SKILL.md) | `molthub install cicd-pipeline` | GitHub Actions for Node, Python, Go, Rust; matrix builds, caching, Docker build-and-push, secrets management |
+| [coding-agent](skills/coding-agent/SKILL.md) | `molthub install coding-agent` | Reference patterns for an autonomous coding-agent system prompt and toolset |
+| [container-debug](skills/container-debug/SKILL.md) | `molthub install container-debug` | Container logs, exec, networking diagnostics, resource inspection, multi-stage build debugging, health checks, Compose |
+| [cron-scheduling](skills/cron-scheduling/SKILL.md) | `molthub install cron-scheduling` | Cron syntax, systemd timers, one-off jobs, timezone and DST handling, monitoring, locking, idempotent patterns |
+| [csv-pipeline](skills/csv-pipeline/SKILL.md) | `molthub install csv-pipeline` | CSV/JSON/TSV processing — filter, join, aggregate, deduplicate, validate, convert |
+| [data-validation](skills/data-validation/SKILL.md) | `molthub install data-validation` | JSON Schema, Zod, Pydantic, CSV and JSON integrity checks, migration validation |
+| [dns-networking](skills/dns-networking/SKILL.md) | `molthub install dns-networking` | DNS debugging (`dig`, `nslookup`), port testing, firewall rules, curl diagnostics, proxy configuration, certificates |
+| [docker-sandbox](skills/docker-sandbox/SKILL.md) | `molthub install docker-sandbox` | Container sandbox VM management, network proxy, workspace mounting, troubleshooting |
+| [emergency-rescue](skills/emergency-rescue/SKILL.md) | `molthub install emergency-rescue` | Recovery procedures: git disasters, credential leaks, disk full, OOM kills, database failures, deploy rollback, SSH lockout, network outage |
+| [encoding-formats](skills/encoding-formats/SKILL.md) | `molthub install encoding-formats` | Base64, URL encoding, hex, Unicode, JWT decoding, hashing, serialization-format conversion |
+| [git-workflows](skills/git-workflows/SKILL.md) | `molthub install git-workflows` | Interactive rebase, bisect, worktree, reflog recovery, cherry-pick, subtree/submodule, sparse checkout, conflict resolution |
+| [infra-as-code](skills/infra-as-code/SKILL.md) | `molthub install infra-as-code` | Terraform, CloudFormation, Pulumi — VPC, compute, storage, state management, multi-environment patterns |
+| [log-analyzer](skills/log-analyzer/SKILL.md) | `molthub install log-analyzer` | Log parsing, error patterns, stack-trace extraction, structured logging, real-time monitoring, correlation |
+| [makefile-build](skills/makefile-build/SKILL.md) | `molthub install makefile-build` | Make targets, pattern rules, language-specific Makefiles, modern alternatives (Just, Task) |
+| [perf-profiler](skills/perf-profiler/SKILL.md) | `molthub install perf-profiler` | CPU and memory profiling, flame graphs, benchmarking, load testing, leak detection, query optimisation |
+| [regex-patterns](skills/regex-patterns/SKILL.md) | `molthub install regex-patterns` | Validation patterns, parsing, extraction across JS/Python/Go/grep, search-and-replace, lookahead/lookbehind |
+| [security-audit](skills/security-audit/SKILL.md) | `molthub install security-audit-toolkit` | Dependency scanning, secret detection, OWASP patterns, SSL/TLS verification, file permissions, audit scripts |
+| [shell-scripting](skills/shell-scripting/SKILL.md) | `molthub install shell-scripting` | Argument parsing, error handling, trap and cleanup, temp files, parallel execution, portability, config parsing |
+| [skill-reviewer](skills/skill-reviewer/SKILL.md) | `molthub install skill-reviewer` | Quality audit framework — rubric, defect checklists, structural/content/actionability review |
+| [skill-search-optimizer](skills/skill-search-optimizer/SKILL.md) | `molthub install skill-search-optimizer` | Registry discoverability — semantic-search mechanics, description optimisation, visibility testing |
+| [skill-writer](skills/skill-writer/SKILL.md) | `molthub install skill-writer` | `SKILL.md` authoring guide — format spec, frontmatter schema, content patterns, templates |
+| [sql-toolkit](skills/sql-toolkit/SKILL.md) | `molthub install sql-toolkit` | SQLite, PostgreSQL, MySQL — schema design, queries, CTEs, window functions, migrations, EXPLAIN, indexing |
+| [ssh-tunnel](skills/ssh-tunnel/SKILL.md) | `molthub install ssh-tunnel` | Local/remote/dynamic port forwarding, jump hosts, SSH config, key management, scp/rsync, debugging |
+| [test-patterns](skills/test-patterns/SKILL.md) | `molthub install test-patterns` | Jest/Vitest, pytest, Go, Rust, bash — unit tests, mocking, fixtures, coverage, TDD, integration testing |
 
 ---
 
 <details>
-<summary><strong>Research & Security Findings</strong></summary>
+<summary><strong>Research and threat-landscape findings</strong></summary>
 
-Ecosystem exploration produced several research artifacts:
+The toolchain's design was informed by ecosystem analysis. The following research artifacts are preserved in `docs/`:
 
-- **Trojanized skill discovery** — `moltbook-ay` contained instructions to download and execute malware via password-protected archives. Classic social engineering adapted for autonomous agents. No code was executed; the `molthub install` process was [verified from source](docs/journey.md#phase-11-security-audit) to be download-extract-write only.
-- **ClawHub platform analysis** — API reverse-engineering, registry discovery protocol, skill format schema, publishing flow, semantic search mechanics, and registry statistics at one week old (~200+ skills). Full report: [clawdhub-platform-report.md](docs/research/clawdhub-platform-report.md).
-- **Security compilation** — Willison's "lethal trifecta" framework, CVE-2026-25253 (one-click RCE), the ClawHavoc supply chain campaign (341 malicious skills), the Moltbook database breach, and 21,639 exposed instances. Full analysis: [security-report.md](docs/research/security-report.md).
-- **End-to-end narrative** — From package vetting to 24 published skills, ecosystem retraction, and lessons learned: [journey.md](docs/journey.md).
+- **Trojanised skill discovery** — the `moltbook-ay` skill contained instructions to download and execute malware via password-protected archives. Classic social engineering adapted for autonomous agents. No code was executed; the `molthub install` process was [verified from source](docs/journey.md#phase-11-security-audit) to be download-extract-write only.
+- **ClawHub platform analysis** — API reverse-engineering, registry discovery protocol, skill format schema, publishing flow, semantic-search mechanics, and registry statistics. Full report: [`docs/research/clawdhub-platform-report.md`](docs/research/clawdhub-platform-report.md).
+- **Security compilation** — Willison's "lethal trifecta" framework, CVE-2026-25253 (one-click RCE), the ClawHavoc supply-chain campaign (341 malicious skills), the Moltbook database breach, and 21,639 publicly-exposed instances. Full analysis: [`docs/research/security-report.md`](docs/research/security-report.md).
+- **End-to-end narrative** — From package vetting to twenty-five published skills, ecosystem retraction, and lessons learned: [`docs/journey.md`](docs/journey.md).
 
 </details>
 
 ---
 
-## Project Structure
+## Repository structure
 
 ```
 clawhub-forge/
-  skills/                           # Published skill bundles
-    docker-sandbox/SKILL.md
-    csv-pipeline/SKILL.md
-    ... (25 skills total)
-  tools/                            # Workbench tooling
-    lib/
-      common.sh                     # Colors, logging, skill discovery
-      frontmatter.sh                # YAML frontmatter parser + validator
-      patterns.sh                   # Malicious pattern database (87 patterns, 13 categories, MITRE ATT&CK)
-      line-classifier.sh              # Zero-trust line classifier (SAFE/SUSPICIOUS/MALICIOUS)
-      trust-manifest.sh               # .trust file generation + hash validation
-      sarif_formatter.py              # SARIF 2.1.0 output formatter
-    skill-lint.sh                   # Linter
-    skill-scan.sh                   # Offline security scanner
-    skill-verify.sh                 # Zero-trust skill verifier
-    skill-test.sh                   # Test runner wrapper
-    skill-new.sh                    # Skill scaffolder (creates skill + test)
-    skill-publish.sh                # Gated publisher
-    skill-stats.sh                  # Adoption metrics with trends + ranking
-    registry-explore.sh             # Registry browsing + competitive search
-    workbench-verify.sh             # 12-point health verification
-    pipeline-report.sh              # Pipeline value summary
-  templates/                        # Skill templates
-    cli-tool/SKILL.md               # CLI/tool reference template
-    workflow/SKILL.md               # Process/methodology template
-    language-ref/SKILL.md           # Language/syntax reference template
-    _test.template.sh               # Auto-generated test file template
-  tests/                            # Behavioral tests
-    _framework/
-      runner.sh                     # Test file discovery + execution
-      assertions.sh                 # assert_section_exists, assert_contains, etc.
-    scanner-self-test/              # Scanner accuracy validation
-      known-bad.md                  # Hits every pattern category
-      known-clean.md                # Zero findings expected
-      allowlisted.md                # Findings suppressed via .scanignore
-      run.sh                        # Self-test runner
-    docker-sandbox.test.sh          # 25 test files (100% skill coverage)
-    ...
-  docs/
-    journey.md                      # Full session narrative
-    research/
-      clawdhub-platform-report.md   # API reverse-engineering report
-      security-report.md            # Trojanized skill + security findings
-    setup/
-      claude-speckit.md             # Spec-driven development reference
-      airgapped-sandbox.md          # Docker sandbox setup guide
-  .devcontainer/
-    devcontainer.json               # Dev container config
-    package.json                    # Workbench package manifest
-    setup.sh                        # Post-create setup script
-  .github/workflows/
-    skill-ci.yml                    # CI: lint → scan → test on PR
-  Makefile                          # Single entry point for all commands
+├── Makefile                       single entry point for all commands (~35 targets)
+├── component.yml                  Lobster-TrApp manifest contract
+├── Containerfile                  vault-forge container image
+├── skills/                        25 reference skills
+├── tools/
+│   ├── lib/
+│   │   ├── common.sh              colours, logging, skill discovery
+│   │   ├── frontmatter.sh         YAML frontmatter parser and validator
+│   │   ├── patterns.sh            87 malicious-content patterns
+│   │   ├── line-classifier.sh     SAFE / SUSPICIOUS / MALICIOUS classifier
+│   │   ├── trust-manifest.sh      `.trust` file generation and SHA-256 validation
+│   │   └── sarif_formatter.py     SARIF 2.1.0 output formatter
+│   ├── skill-lint.sh              linter
+│   ├── skill-scan.sh              static scanner
+│   ├── skill-verify.sh            zero-trust line verifier
+│   ├── skill-test.sh              test runner
+│   ├── skill-new.sh               scaffolder
+│   ├── skill-publish.sh           gated publisher
+│   ├── skill-stats.sh             adoption metrics
+│   ├── registry-explore.sh        registry browsing
+│   ├── workbench-verify.sh        12-point health check
+│   └── pipeline-report.sh         pipeline summary
+├── templates/                     skill templates
+├── tests/
+│   ├── _framework/                test runner and assertions
+│   ├── scanner-self-test/         scanner accuracy fixtures
+│   └── *.test.sh                  25 test files
+├── .github/workflows/
+│   └── skill-ci.yml               CI: lint, scan, test on every PR
+└── docs/                          research, setup, journey
 ```
 
-## How Skills Work
+## Skill format
 
-Each skill is a `SKILL.md` file with YAML frontmatter that tells an AI agent when and how to use it:
+Each skill is a `SKILL.md` file with YAML frontmatter that informs an AI agent of when and how to use it:
 
 ```yaml
 ---
@@ -325,23 +275,19 @@ metadata: {"clawdbot":{"emoji":"...","requires":{"anyBins":["tool1","tool2"]}}}
 
 # Skill Title
 
-Reference material, patterns, commands, and examples the agent
-can follow to perform the task.
+Reference material, patterns, commands, and examples that the agent
+follows to perform the task.
 ```
 
-Install any skill with `molthub install <slug>`. Skills are placed in `./skills/<slug>/` and loaded by the agent on demand.
+Skills install via `molthub install <slug>` and are placed at `./skills/<slug>/`; the agent loads them on demand.
 
 ---
 
-## Companion Repositories
+## Companion repositories
 
-These three repos form a trifecta for safe engagement with the OpenClaw ecosystem:
-
-- **[openclaw-vault](https://github.com/albertdobmeyer/openclaw-vault)** — Run agents safely. Hardened container with proxy-side API key injection, domain allowlisting, kill switch, 15-point security verification.
-- **[moltbook-pioneer](https://github.com/albertdobmeyer/moltbook-pioneer)** — Socialize safely. Research and safe participation in the Moltbook agentic social network. Feed scanner, agent census, identity management.
-
----
+- [`openclaw-vault`](https://github.com/albertdobmeyer/openclaw-vault) — runtime containment for the OpenClaw agent. Hardened container, proxy-side API-key injection, domain allowlist, three-level kill switch, 24-point security verification.
+- [`moltbook-pioneer`](https://github.com/albertdobmeyer/moltbook-pioneer) — analysis of the Moltbook AI-agent social network. **Parked since 2026-05-03** following Meta's acquisition of Moltbook on 2026-03-10 and the resulting API instability.
 
 ## License
 
-Skills are published to ClawHub under its registry terms. Source files in this repo are [MIT licensed](LICENSE).
+Skills are published to ClawHub under the registry's terms. Source files in this repository are licensed under [MIT](LICENSE).
