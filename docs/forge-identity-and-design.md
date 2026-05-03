@@ -41,7 +41,7 @@ A prompt injection attack embedded in the original SKILL.md is destroyed during 
 
 - NOT a runtime environment (that's openclaw-vault)
 - NOT a container orchestrator (that's lobster-trapp)
-- NOT a social network tool (that's moltbook-pioneer)
+- NOT a social-network analysis tool (that role is held by `moltbook-pioneer`, parked since 2026-05-03)
 - NOT a code execution sandbox (skills are markdown reference documents)
 
 ---
@@ -489,9 +489,9 @@ Phase 5 (CI/CD) <-- final polish
 - Split Shell: MANUAL ONLY (user reviews, user initiates)
 - Soft Shell: MANUAL OR ASSISTED (agent may suggest but cannot install autonomously)
 
-### Forge -> Pioneer (Pattern Sharing)
+### Forge -> Pioneer (pattern sharing)
 
-Forge has 87 skill-focused patterns. Pioneer has 30 social-content-focused patterns. These are intentionally different -- different attack surfaces require different detection. No sharing needed currently, but pattern format should be compatible for future convergence.
+Forge has 87 skill-focused patterns. Pioneer was designed with 25 social-content-focused patterns. These are intentionally different — different attack surfaces require different detection. The pattern format is compatible for future convergence, but Pioneer has been parked since 2026-05-03 (Moltbook acquired by Meta on 2026-03-10; API intermittent since 2026-04-05), so no sharing is active.
 
 ---
 
@@ -524,7 +524,7 @@ A downloaded skill must defeat ALL layers to cause harm:
 | 4. Post-verification | forge (zero-trust) | Every line of reconstruction classified SAFE or rejected |
 | 5. Security certificate | forge | Machine-readable proof of verification for downstream consumers |
 | 6. Vault tool policy | vault | Even if skill loads, denied tools are invisible to agent |
-| 7. Container exoskeleton | vault | Even if tool policy fails, container limits blast radius |
+| 7. Container hardening | vault | Even if tool policy fails, the container's read-only root, dropped capabilities, and seccomp profile limit blast radius |
 
 ### Why CDR Defeats Novel Attacks
 
