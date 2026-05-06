@@ -345,21 +345,18 @@ commands:
     timeout_seconds: 30
 
   - id: explore
-    name: Explore Skill
-    description: Show detailed structure and metadata for a skill
+    name: Browse the Skill Library
+    description: Search the public skill library for a topic and show clean, vetted candidates
     group: monitoring
     type: query
     danger: safe
-    command: make explore SKILL=${skill}
+    command: make explore QUERY=${query}
     args:
-      - id: skill
-        name: Skill
-        description: Skill to explore
-        type: enum
+      - id: query
+        name: Search term
+        description: What kind of skill are you looking for? (e.g. "csv format", "calendar")
+        type: string
         required: true
-        options_from:
-          command: ls skills/ 2>/dev/null
-          timeout_seconds: 5
     output:
       format: ansi
       display: terminal
