@@ -1,8 +1,8 @@
-# ClawHub Forge — Security Gatekeeper for the OpenClaw Skill Ecosystem
+# OpenSkill Forge — Security Gatekeeper for the OpenClaw Skill Ecosystem
 
 ## What This Is
 
-ClawHub Forge is the **security gatekeeper** that ensures every skill entering or leaving a user's system is verified clean. It serves three roles:
+OpenSkill Forge is the **security gatekeeper** that ensures every skill entering or leaving a user's system is verified clean. It serves three roles:
 
 | Role | What It Does |
 |------|-------------|
@@ -10,44 +10,44 @@ ClawHub Forge is the **security gatekeeper** that ensures every skill entering o
 | **Anvil** | Helps users create new skills with AI assistance and automatic pipeline verification |
 | **Stamp** | Publishes skills with security certificates proving they passed the full pipeline |
 
-**Role in ecosystem**: `toolchain` — the supply chain defense layer that vets skills before they reach the agent runtime (openclaw-vault).
+**Role in ecosystem**: `toolchain` — the supply chain defense layer that vets skills before they reach the agent runtime (opencli-container).
 
 **Authoritative design document:** `docs/forge-identity-and-design.md` — the complete identity, feature spec, and handoff document.
 
 ## Target User
 
-**Non-technical users** who run the Lobster-TrApp desktop app. They interact with forge through:
-- The **Lobster-TrApp GUI** (primary) — buttons, wizards, status badges
+**Non-technical users** who run the OpenTrApp desktop app. They interact with forge through:
+- The **OpenTrApp GUI** (primary) — buttons, wizards, status badges
 - Their **OpenClaw agent** (secondary) — the agent assists with skill creation
 - **Claude Code on the host** (power users) — direct CLI access to Makefile targets
 
 The forge makes all security decisions FOR the user and presents clear pass/fail results.
 
-## This Repo Is a Lobster-TrApp Component
+## This Repo Is a OpenTrApp Component
 
-This repo is integrated into [lobster-trapp](https://github.com/albertdobmeyer/lobster-trapp) as a git submodule under `components/clawhub-forge/`. The file `component.yml` in this repo's root is the **manifest contract** that tells the Lobster-TrApp GUI how to discover, display, and control this component.
+This repo is integrated into [opentrapp](https://github.com/albertdobmeyer/opentrapp) as a git submodule under `components/openskill-forge/`. The file `component.yml` in this repo's root is the **manifest contract** that tells the OpenTrApp GUI how to discover, display, and control this component.
 
 ### Manifest Contract Rules
 - `component.yml` must always parse as valid YAML
-- `identity.id` must be `clawhub-forge` (the GUI uses this as a stable key)
+- `identity.id` must be `openskill-forge` (the GUI uses this as a stable key)
 - `identity.role` must be `toolchain`
 - Commands with `options_from` must have working commands (e.g., `ls skills/` must work from repo root)
 - All `available_when` values must reference states declared in `status.states`
 - Command IDs and health probe IDs must be unique
 
 ### Validating the Manifest
-From the lobster-trapp root:
+From the opentrapp root:
 ```bash
 bash tests/orchestrator-check.sh    # Validates all manifests including this one
-cargo test -p lobster-trapp          # Rust tests parse this manifest specifically
+cargo test -p opentrapp          # Rust tests parse this manifest specifically
 ```
 
 ## Containerized Deployment (Perimeter Model)
 
-In production, forge runs inside **vault-forge** — a dedicated container in the Lobster-TrApp 4-container perimeter. All untrusted content (downloaded SKILL files) is processed inside this container, never on the user's host machine.
+In production, forge runs inside **vault-forge** — a dedicated container in the OpenTrApp 4-container perimeter. All untrusted content (downloaded SKILL files) is processed inside this container, never on the user's host machine.
 
 - **Containerfile** in this repo's root defines the image (~233MB, python:3.10-slim + bash toolchain)
-- **vault-forge** is one of 4 services in `compose.yml` at the lobster-trapp root
+- **vault-forge** is one of 4 services in `compose.yml` at the opentrapp root
 - Runs on **forge-net** (internal network) — can reach vault-proxy but CANNOT reach vault-agent or vault-pioneer
 - Certified skills delivered to agent via **forge-deliveries** shared volume (write in forge, read-only in agent)
 - Non-root user, capabilities dropped, 1GB memory limit
@@ -64,9 +64,9 @@ The CLI/Makefile usage documented below still applies for development. The Conta
 ## Directory Structure
 
 ```
-clawhub-forge/
+openskill-forge/
 ├── Makefile                      Single entry point for all commands (~35 targets)
-├── component.yml                 MANIFEST — Lobster-TrApp contract
+├── component.yml                 MANIFEST — OpenTrApp contract
 ├── skills/                       25 published skills
 ├── tools/
 │   ├── lib/
@@ -163,16 +163,16 @@ The original downloaded file is NEVER accessible. Binary: clean rebuild or disca
 
 ## Dual-Copy Sync
 
-This repo may exist as both a standalone clone and a submodule under lobster-trapp.
+This repo may exist as both a standalone clone and a submodule under opentrapp.
 
-**GitHub**: https://github.com/albertdobmeyer/clawhub-forge
+**GitHub**: https://github.com/albertdobmeyer/openskill-forge
 
 After pushing changes from either location, sync the other:
 ```bash
 # In the other copy:
 git pull
 # If submodule copy, also update parent:
-cd ../.. && git add components/clawhub-forge && git commit -m "Update clawhub-forge ref"
+cd ../.. && git add components/openskill-forge && git commit -m "Update openskill-forge ref"
 ```
 
 ## Development Principles
@@ -185,7 +185,7 @@ cd ../.. && git add components/clawhub-forge && git commit -m "Update clawhub-fo
 
 ## What NOT to Do
 
-- Do not change `identity.id` or `identity.role` in component.yml without coordinating with lobster-trapp
+- Do not change `identity.id` or `identity.role` in component.yml without coordinating with opentrapp
 - Do not remove or rename command IDs that the GUI depends on — add new ones instead
 - Do not modify `tools/lib/patterns.sh` without running `make self-test` to verify scanner accuracy
 - Do not bypass the gated publish pipeline — `make publish` enforces lint→scan→test

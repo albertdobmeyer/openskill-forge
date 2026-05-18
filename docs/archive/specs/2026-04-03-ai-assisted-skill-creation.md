@@ -261,4 +261,4 @@ A non-technical user can run `make create`, describe a skill in plain language, 
 
 ---
 
-*This spec covers Phase 4 of the clawhub-forge roadmap. See `docs/roadmap.md` for the full phase plan.*
+*This spec covers Phase 4 of the openskill-forge roadmap. See `docs/roadmap.md` for the full phase plan.*

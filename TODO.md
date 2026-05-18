@@ -1,4 +1,4 @@
-# ClawHub-Forge — TODO
+# OpenSkill-Forge — TODO
 
 Current actionable items from Phase 1 (Housekeeping). See `docs/roadmap.md` for the full 5-phase plan and `docs/forge-identity-and-design.md` for the authoritative design.
 

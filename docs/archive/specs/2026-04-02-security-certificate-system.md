@@ -52,7 +52,7 @@ Build the bridge between forge and vault. When a skill passes the full security 
 
 ### Vault Compatibility
 
-The vault's `install-skill.sh` (already implemented at `openclaw-vault/scripts/install-skill.sh:156-213`) validates:
+The vault's `install-skill.sh` (already implemented at `opencli-container/scripts/install-skill.sh:156-213`) validates:
 - `scan.status == "PASS"`
 - `scan.critical == 0`
 - `verify.verdict == "VERIFIED"`
@@ -148,7 +148,7 @@ export: ## Certify + package for vault transfer (SKILL=name)
 
 ### component.yml — Add commands
 
-Add `certify` and `export` commands in the operations group for the Lobster-TrApp GUI.
+Add `certify` and `export` commands in the operations group for the OpenTrApp GUI.
 
 ### .gitignore — Add exports/
 
@@ -190,10 +190,10 @@ make export SKILL=api-dev
 # → Certificate valid (checksum matches)
 # → Exported to exports/api-dev/
 
-# Install in vault (from lobster-trapp root)
-cd components/openclaw-vault
-bash scripts/install-skill.sh ../clawhub-forge/exports/api-dev/ \
-  --clearance ../clawhub-forge/exports/api-dev/clearance-report.json
+# Install in vault (from opentrapp root)
+cd components/opencli-container
+bash scripts/install-skill.sh ../openskill-forge/exports/api-dev/ \
+  --clearance ../openskill-forge/exports/api-dev/clearance-report.json
 # → Clearance: PASS (scan clean, verified, checksum valid)
 # → Skill 'api-dev' installed to workspace/skills/api-dev/
 ```

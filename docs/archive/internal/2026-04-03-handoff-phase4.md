@@ -25,13 +25,13 @@
 - New scripts: `skill-cdr.sh` (orchestrator), `skill-download.sh`, plus 6 lib scripts
 - Ollama integration via raw curl (no agent framework, no tools, no MCP)
 - 9/9 CDR pipeline tests passing (including full Ollama end-to-end)
-- Vault skill guard at `openclaw-vault/scripts/verify-skills.sh`
+- Vault skill guard at `opencli-container/scripts/verify-skills.sh`
 - Makefile targets: `download`, `cdr`, `cdr-download`
 
 ## Current System State
 
-- **clawhub-forge:** 12/12 workbench verification, 168/168 skill tests, 10/10 scanner self-test, 9/9 CDR tests
-- **openclaw-vault:** Soft Shell active, clawbot live on Telegram, vault skill guard deployed
+- **openskill-forge:** 12/12 workbench verification, 168/168 skill tests, 10/10 scanner self-test, 9/9 CDR tests
+- **opencli-container:** Soft Shell active, clawbot live on Telegram, vault skill guard deployed
 - **Ollama:** Running on localhost:11434, using `qwen2.5-coder:1.5b` (7b model has Vulkan GPU errors on this hardware)
 
 ## What Phase 4 Needs to Do

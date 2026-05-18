@@ -1,18 +1,18 @@
-# ClawHub-Forge: Identity, Features & Handoff Document
+# OpenSkill-Forge: Identity, Features & Handoff Document
 
 ## Context
 
-This document defines what clawhub-forge IS, what it needs to become, and serves as a complete handoff for a new Claude instance to pick up development. It was produced after a thorough audit of all existing documentation, code, and cross-repo architecture across the lobster-trapp ecosystem.
+This document defines what openskill-forge IS, what it needs to become, and serves as a complete handoff for a new Claude instance to pick up development. It was produced after a thorough audit of all existing documentation, code, and cross-repo architecture across the opentrapp ecosystem.
 
-**Problem:** The clawhub-forge documentation describes itself inconsistently — sometimes as a "skill development workbench," sometimes as a "security scanner," sometimes as a "registry contributor tool." The identity needs to be unified and the feature set needs to be complete before implementation continues.
+**Problem:** The openskill-forge documentation describes itself inconsistently — sometimes as a "skill development workbench," sometimes as a "security scanner," sometimes as a "registry contributor tool." The identity needs to be unified and the feature set needs to be complete before implementation continues.
 
 ---
 
-## 1. Identity: What ClawHub-Forge IS
+## 1. Identity: What OpenSkill-Forge IS
 
 ### One-Sentence Definition
 
-ClawHub-Forge is the **security gatekeeper for the OpenClaw skill ecosystem** — it ensures that every skill entering or leaving a user's system is verified clean, whether the user wrote it themselves, downloaded it from the network, or wants to share it with others.
+OpenSkill-Forge is the **security gatekeeper for the OpenClaw skill ecosystem** — it ensures that every skill entering or leaving a user's system is verified clean, whether the user wrote it themselves, downloaded it from the network, or wants to share it with others.
 
 ### The Three Roles (Unified Under One Mission)
 
@@ -26,7 +26,7 @@ ClawHub-Forge is the **security gatekeeper for the OpenClaw skill ecosystem** �
 
 **"Never trust a downloaded file. Rebuild it."**
 
-ClawHub has an 11.9% malware rate (341/2,857 skills during ClawHavoc). Traditional scanning catches known patterns but misses novel attacks. ClawHub-Forge introduces **Content Disarm & Reconstruction (CDR) for agent skill files** — a technique borrowed from enterprise email security but applied to AI agent instructions.
+ClawHub has an 11.9% malware rate (341/2,857 skills during ClawHavoc). Traditional scanning catches known patterns but misses novel attacks. OpenSkill-Forge introduces **Content Disarm & Reconstruction (CDR) for agent skill files** — a technique borrowed from enterprise email security but applied to AI agent instructions.
 
 Instead of scanning a downloaded skill and hoping the scanner catches everything, forge:
 1. Quarantines the original (it never touches the user's workspace)
@@ -39,17 +39,17 @@ A prompt injection attack embedded in the original SKILL.md is destroyed during 
 
 ### What It Is NOT
 
-- NOT a runtime environment (that's openclaw-vault)
-- NOT a container orchestrator (that's lobster-trapp)
-- NOT a social-network analysis tool (that role is held by `moltbook-pioneer`, parked since 2026-05-03)
+- NOT a runtime environment (that's opencli-container)
+- NOT a container orchestrator (that's opentrapp)
+- NOT a social-network analysis tool (that role is held by `openagent-social`, parked since 2026-05-03)
 - NOT a code execution sandbox (skills are markdown reference documents)
 
 ---
 
 ## 2. Target User
 
-**Non-technical users** who run the Lobster-TrApp desktop app. They interact with forge through:
-- The **Lobster-TrApp GUI** (primary) — buttons, wizards, status badges
+**Non-technical users** who run the OpenTrApp desktop app. They interact with forge through:
+- The **OpenTrApp GUI** (primary) — buttons, wizards, status badges
 - Their **OpenClaw agent** (secondary) — the agent assists with skill creation, guided by forge's pipeline
 - **Claude Code on the host** (power users) — direct CLI access to Makefile targets
 
@@ -179,7 +179,7 @@ User clicks "Publish" on a skill in GUI
         -> GPG signature (optional, if user has GPG configured)
         -> Timestamp and forge version
     -> Certificate published alongside skill to ClawHub
-    -> Other users can see: "This skill was verified by ClawHub-Forge v1.x"
+    -> Other users can see: "This skill was verified by OpenSkill-Forge v1.x"
     -> Certificate allows other forge users to fast-path verify (hash match)
 ```
 
@@ -245,7 +245,7 @@ User clicks "Publish" on a skill in GUI
 | Post-install quarantine | `.devcontainer/setup.sh` | `molthub-safe` wrapper blocks + auto-scans |
 | CI pipeline | `.github/workflows/skill-ci.yml` | lint->scan->test on PR (publish commented out) |
 | Makefile | `Makefile` | 35+ targets, single entry point |
-| component.yml | `component.yml` | 15 commands for Lobster-TrApp GUI |
+| component.yml | `component.yml` | 15 commands for OpenTrApp GUI |
 | Suppression system | `.scanignore` files, inline `<!-- scan:ignore -->` | Range-limited (50-line max) |
 
 ### NOT Implemented
@@ -263,7 +263,7 @@ User clicks "Publish" on a skill in GUI
 
 ```
 +-------------------------------------------------------------+
-|                     LOBSTER-TRAPP GUI                        |
+|                     OPENTRAPP GUI                        |
 |         (discovers, displays, controls via manifests)        |
 +----------+------------------+------------------+------------+
            |                  |                  |
@@ -285,7 +285,7 @@ User clicks "Publish" on a skill in GUI
 ### Forge Internal Architecture
 
 ```
-clawhub-forge/
+openskill-forge/
 +-- tools/                    EXISTING -- scanning/verification pipeline
 |   +-- lib/
 |   |   +-- patterns.sh       87 malicious regex patterns (MITRE ATT&CK)
@@ -502,10 +502,10 @@ Forge has 87 skill-focused patterns. Pioneer was designed with 25 social-content
 | Forge described as "development workbench" not "security gatekeeper" | CLAUDE.md, README.md | Rewrite identity section with Shield/Anvil/Stamp framing |
 | No mention of CDR anywhere | All docs | Add CDR as core feature after implementation |
 | Roadmap doesn't mention CDR | `docs/roadmap.md` | Rewrite with this document's phased plan |
-| Trifecta.md says "most important integration gap" is skill path | `lobster-trapp/docs/trifecta.md` | Update when Phase 2 (certificates) is implemented |
-| Handoff doc from vault references forge Phase 3 | `openclaw-vault/docs/handoff-to-clawhub-forge.md` | Update when this design is approved |
+| Trifecta.md says "most important integration gap" is skill path | `opentrapp/docs/trifecta.md` | Update when Phase 2 (certificates) is implemented |
+| Handoff doc from vault references forge Phase 3 | `opencli-container/docs/handoff-to-openskill-forge.md` | Update when this design is approved |
 | TODO.md is stale | `TODO.md` | Replace with roadmap-derived tasks |
-| Glossary missing forge-specific terms | `lobster-trapp/GLOSSARY.md` | Add CDR, quarantine, clearance report, security certificate |
+| Glossary missing forge-specific terms | `opentrapp/GLOSSARY.md` | Add CDR, quarantine, clearance report, security certificate |
 | No mention of non-technical user target | `CLAUDE.md` | Add target user section |
 
 ---
@@ -541,14 +541,14 @@ CDR defeats unknown attacks because:
 
 ```
 HOST SYSTEM (user's computer)
-+-- Claude Code / Lobster-TrApp GUI (user's agent)
-+-- ClawHub-Forge (scanning + CDR)
++-- Claude Code / OpenTrApp GUI (user's agent)
++-- OpenSkill-Forge (scanning + CDR)
 |   +-- Isolated LLM (Ollama or separate API call)
 |       +-- ONLY sees pre-filtered safe content
 |       +-- SEPARATE from vault agent
 |       +-- SEPARATE from user's Claude Code
 |
-+-- OpenClaw-Vault Container (agent runtime)
++-- OpenCli-Container Container (agent runtime)
 |   +-- Vault agent (NEVER sees raw downloaded content)
 |   +-- Only receives clean, certified skills
 |
@@ -563,7 +563,7 @@ HOST SYSTEM (user's computer)
 | Decision | Resolution | Rationale |
 |----------|-----------|-----------|
 | **CDR backend** | Ollama default, API fallback | Maximum air-gap by default. API for users who want higher fidelity. |
-| **Document location** | `clawhub-forge/docs/forge-identity-and-design.md` | It's the forge's own identity document |
+| **Document location** | `openskill-forge/docs/forge-identity-and-design.md` | It's the forge's own identity document |
 | **Certificate signing** | SHA-256 always, GPG optional | SHA-256 proves integrity. GPG proves identity for users who have it configured. |
 | **Build approach** | CLI-first (Makefile targets) | Match the vault's pattern. GUI wraps CLI via component.yml. |
 | **Original file policy** | NEVER accessible. Binary: rebuild or discard. | Eliminates social engineering attacks where user bypasses security. |
@@ -579,14 +579,14 @@ HOST SYSTEM (user's computer)
 
 ## 12. Handoff Instructions for New Instance
 
-**You are picking up development of clawhub-forge.** Read these documents in order:
+**You are picking up development of openskill-forge.** Read these documents in order:
 
 1. **This document** -- the authoritative identity and feature spec
-2. **`CLAUDE.md`** in clawhub-forge root -- project instructions and manifest rules
+2. **`CLAUDE.md`** in openskill-forge root -- project instructions and manifest rules
 3. **`docs/roadmap.md`** -- will be rewritten to match this document's phased plan
-4. **`lobster-trapp/docs/trifecta.md`** -- how forge fits with vault and pioneer
-5. **`lobster-trapp/GLOSSARY.md`** -- official terminology
-6. **`openclaw-vault/docs/handoff-to-clawhub-forge.md`** -- what vault completed and what it expects from forge
+4. **`opentrapp/docs/trifecta.md`** -- how forge fits with vault and pioneer
+5. **`opentrapp/GLOSSARY.md`** -- official terminology
+6. **`opencli-container/docs/handoff-to-openskill-forge.md`** -- what vault completed and what it expects from forge
 
 **Development principles (carry forward from vault):**
 1. Security first -- this is a public security promise
@@ -601,6 +601,6 @@ HOST SYSTEM (user's computer)
 
 ---
 
-*This document replaces the previous scattered descriptions of clawhub-forge's identity. All future development should reference this as the authoritative design.*
+*This document replaces the previous scattered descriptions of openskill-forge's identity. All future development should reference this as the authoritative design.*
 
 *Last updated: 2026-04-04 — Phases 1-4 complete, only Phase 5 (CI/CD) remains*
