@@ -1,5 +1,5 @@
-# ClawHub-Forge: Containerized Security Scanner & Skill Workshop
-# Part of the Lobster-TrApp perimeter — handles untrusted SKILL files
+# OpenSkill-Forge: Containerized Security Scanner & Skill Workshop
+# Part of the OpenTrApp perimeter — handles untrusted SKILL files
 # inside the container, never on the host.
 #
 # Build:  podman build -t vault-forge -f Containerfile .
@@ -10,7 +10,7 @@
 
 FROM python:3.10-slim
 
-LABEL maintainer="ClawHub-Forge" \
+LABEL maintainer="OpenSkill-Forge" \
       description="Skill security scanner — scans, verifies, and rebuilds untrusted SKILL files inside the perimeter"
 
 # Install system dependencies — bash-first toolchain

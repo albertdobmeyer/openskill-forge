@@ -29,7 +29,7 @@
 | `Makefile` | Modify | Add `download`, `cdr`, `cdr-download` targets |
 | `component.yml` | Modify | Add `cdr` and `download-safe` commands |
 | `.gitignore` | Modify | Add `quarantine/` |
-| `openclaw-vault/scripts/verify-skills.sh` | Create | Vault skill guard |
+| `opencli-container/scripts/verify-skills.sh` | Create | Vault skill guard |
 | `TODO.md` | Modify | Mark Phase 3 complete |
 
 **Note:** Complex parsing/validation/reconstruction logic uses Python3 scripts (`.py`) rather than bash. This follows the existing pattern — the scanner and verifier already shell out to Python3 for JSON handling. The `.py` files are called from bash wrappers.
@@ -350,7 +350,7 @@ if __name__ == '__main__':
 
 ```bash
 chmod +x tools/lib/cdr-parse.py
-cd components/clawhub-forge
+cd components/openskill-forge
 python3 tools/lib/cdr-parse.py tests/cdr-fixtures/clean-skill.md | python3 -m json.tool | head -20
 ```
 
@@ -507,7 +507,7 @@ fi
 
 ```bash
 chmod +x tools/lib/cdr-prefilter.sh
-cd components/clawhub-forge
+cd components/openskill-forge
 python3 tools/lib/cdr-parse.py tests/cdr-fixtures/injected-skill.md > /tmp/parsed.json
 bash tools/lib/cdr-prefilter.sh /tmp/parsed.json > /tmp/filtered.json 2>&1
 echo "EXIT: $?"
@@ -655,7 +655,7 @@ chmod +x tools/lib/cdr-intent.sh
 - [ ] **Step 3: Test with clean fixture (requires Ollama running)**
 
 ```bash
-cd components/clawhub-forge
+cd components/openskill-forge
 python3 tools/lib/cdr-parse.py tests/cdr-fixtures/clean-skill.md > /tmp/cdr-parsed.json
 bash tools/lib/cdr-prefilter.sh /tmp/cdr-parsed.json > /tmp/cdr-filtered.json 2>&1
 bash tools/lib/cdr-intent.sh /tmp/cdr-filtered.json 2>&1 | python3 -m json.tool | head -20
@@ -907,7 +907,7 @@ if __name__ == '__main__':
 
 ```bash
 chmod +x tools/lib/cdr-validate.py tools/lib/cdr-reconstruct.py
-cd components/clawhub-forge
+cd components/openskill-forge
 
 # Test valid intent
 echo '{"name":"test","purpose":"A test skill for validation","use_cases":["testing"],"commands":[{"cmd":"echo hi","context":"greeting"}],"tips":["be careful"],"patterns":[]}' > /tmp/test-intent.json
@@ -1224,7 +1224,7 @@ chmod +x tools/skill-cdr.sh
 - [ ] **Step 3: Test with clean fixture (requires Ollama running)**
 
 ```bash
-cd components/clawhub-forge
+cd components/openskill-forge
 bash tools/skill-cdr.sh tests/cdr-fixtures/clean-skill.md 2>&1
 ```
 
@@ -1324,7 +1324,7 @@ Add after the `export` command:
 - [ ] **Step 3: Validate YAML**
 
 ```bash
-cd components/clawhub-forge
+cd components/openskill-forge
 python3 -c "import yaml; yaml.safe_load(open('component.yml')); print('VALID')"
 ```
 
@@ -1492,7 +1492,7 @@ fi
 
 ```bash
 chmod +x tests/cdr-pipeline.test.sh
-cd components/clawhub-forge
+cd components/openskill-forge
 bash tests/cdr-pipeline.test.sh
 ```
 
@@ -1510,7 +1510,7 @@ git commit -m "feat: CDR pipeline tests (parser, pre-filter, validation, reconst
 ### Task 11: Vault skill guard (cross-module)
 
 **Files:**
-- Create: `components/openclaw-vault/scripts/verify-skills.sh`
+- Create: `components/opencli-container/scripts/verify-skills.sh`
 
 - [ ] **Step 1: Create verify-skills.sh**
 
@@ -1524,7 +1524,7 @@ set -uo pipefail
 VAULT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 RUNTIME="podman"
 command -v podman &>/dev/null || RUNTIME="docker"
-CONTAINER="openclaw-vault"
+CONTAINER="opencli-container"
 WORKSPACE_SKILLS="/home/vault/.openclaw/workspace/skills"
 
 BOLD='\033[1m'
@@ -1590,13 +1590,13 @@ if (( UNVERIFIED > 0 )); then
   echo ""
   echo -e "${YELLOW}WARNING: $UNVERIFIED skill(s) have no trust file.${NC}"
   echo "  These skills bypassed the forge security pipeline."
-  echo "  Run: cd components/clawhub-forge && make certify SKILL=<name>"
+  echo "  Run: cd components/openskill-forge && make certify SKILL=<name>"
 fi
 
 if (( MODIFIED > 0 )); then
   echo ""
   echo -e "${YELLOW}WARNING: $MODIFIED skill(s) modified after verification.${NC}"
-  echo "  Re-certify with: cd components/clawhub-forge && make certify SKILL=<name>"
+  echo "  Re-certify with: cd components/openskill-forge && make certify SKILL=<name>"
 fi
 
 echo ""
@@ -1605,8 +1605,8 @@ echo ""
 - [ ] **Step 2: Make executable and commit**
 
 ```bash
-chmod +x components/openclaw-vault/scripts/verify-skills.sh
-cd components/openclaw-vault
+chmod +x components/opencli-container/scripts/verify-skills.sh
+cd components/opencli-container
 git add scripts/verify-skills.sh
 git commit -m "feat: vault skill guard — verify installed skills have trust files"
 ```
@@ -1616,11 +1616,11 @@ git commit -m "feat: vault skill guard — verify installed skills have trust fi
 ### Task 12: Final validation and cleanup
 
 **Files:**
-- Modify: `TODO.md` (in clawhub-forge)
+- Modify: `TODO.md` (in openskill-forge)
 
 - [ ] **Step 1: Update TODO.md**
 
-In clawhub-forge's `TODO.md`, change the CDR line from:
+In openskill-forge's `TODO.md`, change the CDR line from:
 ```
 - [ ] Build Content Disarm & Reconstruction pipeline (CDR — the core innovation)
 ```
@@ -1632,7 +1632,7 @@ to:
 - [ ] **Step 2: Run existing test suites (regression)**
 
 ```bash
-cd components/clawhub-forge
+cd components/openskill-forge
 make self-test 2>&1 | tail -3
 make test 2>&1 | tail -5
 ```
@@ -1665,11 +1665,11 @@ rm -rf skills/test-clean/
 - [ ] **Step 6: Commit and push**
 
 ```bash
-cd components/clawhub-forge
+cd components/openskill-forge
 git add TODO.md
 git commit -m "docs: mark Phase 3 (CDR) complete"
 git push
 
-cd components/openclaw-vault
+cd components/opencli-container
 git push
 ```

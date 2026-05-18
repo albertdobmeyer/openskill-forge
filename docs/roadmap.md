@@ -1,8 +1,8 @@
-# ClawHub-Forge Roadmap
+# OpenSkill-Forge Roadmap
 
 **Updated:** 2026-04-07
 **Current state:** 25 published skills, 87-pattern scanner, zero-trust verifier, gated publishing pipeline, 168 behavioral test assertions, AI-assisted skill creation wizard. Identity and feature set defined in `docs/forge-identity-and-design.md`.
-**Cross-reference:** See `docs/trifecta.md` in the lobster-trapp root for how this module fits with openclaw-vault and moltbook-pioneer.
+**Cross-reference:** See `docs/trifecta.md` in the opentrapp root for how this module fits with opencli-container and openagent-social.
 
 ---
 
@@ -80,7 +80,7 @@
 
 **Why:** Three items that improve dashboard value and developer experience, identified during the ecosystem-wide progress assessment.
 
-**Cross-reference:** See `docs/roadmap-v4-finalization.md` in the lobster-trapp root (Phase I, tasks I2-I4).
+**Cross-reference:** See `docs/roadmap-v4-finalization.md` in the opentrapp root (Phase I, tasks I2-I4).
 
 | Task | Details |
 |---|---|
@@ -131,6 +131,6 @@ Phase 5 (CI/CD) <-- deferred (ClawHub API)
 
 ---
 
-*This roadmap covers the clawhub-forge module only. See `openclaw-vault/docs/roadmap.md` and `moltbook-pioneer/docs/roadmap.md` for the other modules. See `docs/forge-identity-and-design.md` for the full identity, architecture, and design rationale.*
+*This roadmap covers the openskill-forge module only. See `opencli-container/docs/roadmap.md` and `openagent-social/docs/roadmap.md` for the other modules. See `docs/forge-identity-and-design.md` for the full identity, architecture, and design rationale.*
 
 *Last updated: 2026-04-07*

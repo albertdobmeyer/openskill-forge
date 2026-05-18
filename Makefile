@@ -6,14 +6,14 @@ TOOLS_DIR := tools
 TESTS_DIR := tests
 
 setup: ## Set up the workbench (verify tools and directories)
-	@echo "[*] Setting up ClawHub Forge workbench..."
+	@echo "[*] Setting up OpenSkill Forge workbench..."
 	@mkdir -p $(SKILLS_DIR) $(TESTS_DIR)
 	@bash $(TOOLS_DIR)/workbench-verify.sh
 	@echo "[+] Setup complete — edit config/.env to configure"
 
 help: ## Show available commands
 	@echo ""
-	@echo "  clawhub-forge workbench"
+	@echo "  openskill-forge workbench"
 	@echo "  ====================="
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \

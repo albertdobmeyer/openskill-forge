@@ -1,10 +1,10 @@
-# clawhub-forge
+# openskill-forge
 
-[![Skill CI](https://github.com/albertdobmeyer/clawhub-forge/actions/workflows/skill-ci.yml/badge.svg)](https://github.com/albertdobmeyer/clawhub-forge/actions/workflows/skill-ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Skill CI](https://github.com/albertdobmeyer/openskill-forge/actions/workflows/skill-ci.yml/badge.svg)](https://github.com/albertdobmeyer/openskill-forge/actions/workflows/skill-ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A skill-authoring toolchain and security scanner for [ClawHub](https://clawdhub.com), the third-party skill registry for the OpenClaw agent runtime. Provides offline static analysis, line-level zero-trust verification, behavioural testing, and a gated publishing pipeline.
 
-This repository serves two roles. As a **standalone toolchain**, it is the author's environment for creating, testing, and publishing skills to ClawHub; twenty-five published skills are included as reference implementations. As a **Lobster-TrApp component**, the same scanner runs inside the `vault-forge` container of the four-container perimeter to vet skills before they reach the agent runtime in `vault-agent`.
+This repository serves two roles. As a **standalone toolchain**, it is the author's environment for creating, testing, and publishing skills to ClawHub; twenty-five published skills are included as reference implementations. As a **OpenTrApp component**, the same scanner runs inside the `vault-forge` container of the four-container perimeter to vet skills before they reach the agent runtime in `vault-agent`.
 
 **Author:** [@albertdobmeyer](https://github.com/albertdobmeyer)
 
@@ -166,10 +166,10 @@ make publish SKILL=my-tool VERSION=1.0.0
 
 ## Containerised deployment
 
-In production, the toolchain runs inside the `vault-forge` container of the Lobster-TrApp four-container perimeter. All untrusted content (downloaded skills) is processed inside the container and never reaches the host filesystem.
+In production, the toolchain runs inside the `vault-forge` container of the OpenTrApp four-container perimeter. All untrusted content (downloaded skills) is processed inside the container and never reaches the host filesystem.
 
 - The `Containerfile` in this repository's root defines the image (~233 MB, `python:3.10-slim` plus the bash toolchain).
-- `vault-forge` is one of four services in `compose.yml` at the lobster-trapp root.
+- `vault-forge` is one of four services in `compose.yml` at the opentrapp root.
 - It runs on `forge-net`, an internal network. It can reach `vault-proxy` for outbound HTTPS but cannot reach `vault-agent` or `vault-pioneer` directly.
 - Certified skills are delivered to the agent through the `forge-deliveries` shared volume, which is writable in `vault-forge` and read-only in `vault-agent`.
 - Non-root user, capabilities dropped, 1 GB memory limit, custom seccomp profile.
@@ -229,9 +229,9 @@ The toolchain's design was informed by ecosystem analysis. The following researc
 ## Repository structure
 
 ```
-clawhub-forge/
+openskill-forge/
 ├── Makefile                       single entry point for all commands (~35 targets)
-├── component.yml                  Lobster-TrApp manifest contract
+├── component.yml                  OpenTrApp manifest contract
 ├── Containerfile                  vault-forge container image
 ├── skills/                        25 reference skills
 ├── tools/
@@ -285,8 +285,8 @@ Skills install via `molthub install <slug>` and are placed at `./skills/<slug>/`
 
 ## Companion repositories
 
-- [`openclaw-vault`](https://github.com/albertdobmeyer/openclaw-vault) — runtime containment for the OpenClaw agent. Hardened container, proxy-side API-key injection, domain allowlist, three-level kill switch, 24-point security verification.
-- [`moltbook-pioneer`](https://github.com/albertdobmeyer/moltbook-pioneer) — analysis of the Moltbook AI-agent social network. **Parked since 2026-05-03** following Meta's acquisition of Moltbook on 2026-03-10 and the resulting API instability.
+- [`opencli-container`](https://github.com/albertdobmeyer/opencli-container) — runtime containment for the OpenClaw agent. Hardened container, proxy-side API-key injection, domain allowlist, three-level kill switch, 24-point security verification.
+- [`openagent-social`](https://github.com/albertdobmeyer/openagent-social) — analysis of the Moltbook AI-agent social network. **Parked since 2026-05-03** following Meta's acquisition of Moltbook on 2026-03-10 and the resulting API instability.
 
 ## License
 

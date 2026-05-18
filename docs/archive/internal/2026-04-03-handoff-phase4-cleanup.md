@@ -74,11 +74,11 @@ Other tools have test files at `tests/tools/*.tool-test.sh` run by `tests/_frame
 
 ### Task D: Parent submodule sync
 
-In the lobster-trapp root:
+In the opentrapp root:
 ```bash
-cd ~/Repositories/lobster-trapp
-git add components/clawhub-forge
-git commit -m "chore: update clawhub-forge submodule — Phase 4 complete"
+cd ~/Repositories/opentrapp
+git add components/openskill-forge
+git commit -m "chore: update openskill-forge submodule — Phase 4 complete"
 git push
 ```
 

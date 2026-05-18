@@ -40,7 +40,7 @@ if [[ -z "$SKILL_NAME" || -z "$SKILL_TYPE" || -z "$DESCRIPTION" ]]; then
   INTERACTIVE=true
 fi
 
-log_header "ClawHub Forge — AI-Assisted Skill Creation"
+log_header "OpenSkill Forge — AI-Assisted Skill Creation"
 echo ""
 
 # ── Step 1: Skill Name ──
