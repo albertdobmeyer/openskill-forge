@@ -4,7 +4,7 @@
 
 A skill-authoring toolchain and security scanner for [ClawHub](https://clawdhub.com), the third-party skill registry for the OpenClaw agent runtime. Provides offline static analysis, line-level zero-trust verification, behavioural testing, and a gated publishing pipeline.
 
-This repository serves two roles. As a **standalone toolchain**, it is the author's environment for creating, testing, and publishing skills to ClawHub; twenty-five published skills are included as reference implementations. As a **OpenTrApp component**, the same scanner runs inside the `vault-forge` container of the four-container perimeter to vet skills before they reach the agent runtime in `vault-agent`.
+This repository serves two roles. As a **standalone toolchain**, it is the author's environment for creating, testing, and publishing skills to ClawHub; twenty-five published skills are included as reference implementations. As a **OpenTrApp component**, the same scanner runs inside the `vault-forge` container of the five-container perimeter (see [ADR-0009](https://github.com/albertdobmeyer/opentrapp/blob/main/docs/adr/0009-five-container-perimeter.md)) to vet skills before they reach the agent runtime in `vault-agent`.
 
 **Author:** [@albertdobmeyer](https://github.com/albertdobmeyer)
 
@@ -166,7 +166,7 @@ make publish SKILL=my-tool VERSION=1.0.0
 
 ## Containerised deployment
 
-In production, the toolchain runs inside the `vault-forge` container of the OpenTrApp four-container perimeter. All untrusted content (downloaded skills) is processed inside the container and never reaches the host filesystem.
+In production, the toolchain runs inside the `vault-forge` container of the OpenTrApp five-container perimeter. All untrusted content (downloaded skills) is processed inside the container and never reaches the host filesystem.
 
 - The `Containerfile` in this repository's root defines the image (~233 MB, `python:3.10-slim` plus the bash toolchain).
 - `vault-forge` is one of four services in `compose.yml` at the opentrapp root.
